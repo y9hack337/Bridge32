@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bridge32 — старые игры на новых телефонах</title>
+<meta name="description" content="Патчер APK прямо в браузере: запускает старые 32-битные ARM-игры на телефонах только с arm64. Файл не покидает ваше устройство.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b6cff'/%3E%3Cpath d='M9 22V10h6.5a3.5 3.5 0 0 1 0 7H9M21 10v12' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <span class="logo"><i></i>Bridge32</span>
+  <nav>
+    <button class="chip" id="lang" type="button" aria-label="Language">EN</button>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1 data-i18n="title">Старые игры — на новых телефонах</h1>
+    <p class="lead" data-i18n="lead">Выберите APK 32-битной игры. Патч выполнится прямо в браузере, файл никуда не загружается.</p>
+  </section>
+
+  <section id="drop" class="drop" tabindex="0" role="button" aria-label="Choose APK">
+    <input id="file" type="file" accept=".apk,application/vnd.android.package-archive" hidden>
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+    <b data-i18n="drop">Перетащите APK сюда</b>
+    <span data-i18n="dropOr">или нажмите, чтобы выбрать файл</span>
+  </section>
+
+  <section id="card" class="card" hidden>
+    <div class="head">
+      <div class="meta">
+        <h2 id="pkg">—</h2>
+        <p id="sub" class="muted"></p>
+      </div>
+      <span id="verdict" class="badge"></span>
+    </div>
+    <div id="abis" class="chips"></div>
+    <ul id="warns" class="warns" hidden></ul>
+
+    <details class="opts">
+      <summary data-i18n="options">Параметры</summary>
+      <label class="row"><input type="checkbox" id="rename"><span data-i18n="rename">Установить рядом с оригиналом (сменить имя пакета)</span></label>
+      <input id="newpkg" class="text" spellcheck="false" autocomplete="off" hidden>
+      <label class="row"><input type="checkbox" id="compat" checked><span data-i18n="compat">Исправить старый Java-код (Apache HTTP, биллинг) — нужно играм, которые иначе вылетают при запуске</span></label>
+      <label class="row"><input type="checkbox" id="keepabis"><span data-i18n="keepAbis">Оставить библиотеки x86/mips</span></label>
+    </details>
+
+    <div class="actions">
+      <button id="go" class="btn primary" type="button" data-i18n="patch">Пропатчить</button>
+      <button id="again" class="btn" type="button" data-i18n="other" hidden>Другой файл</button>
+    </div>
+
+    <div id="prog" class="prog" hidden><i id="bar"></i></div>
+    <p id="status" class="muted status" role="status"></p>
+
+    <div id="result" class="result" hidden>
+      <a id="dl" class="btn primary" download><span data-i18n="download">Скачать</span> <b id="dlname"></b></a>
+      <p id="hint" class="muted"></p>
+      <details class="changes"><summary data-i18n="changes">Что изменено</summary><ul id="changes"></ul></details>
+    </div>
+  </section>
+
+  <section class="notes">
+    <details>
+      <summary data-i18n="howT">Как это работает</summary>
+      <p data-i18n="how">К игре добавляется небольшая прослойка Bridge32 — транслятор 32-битного ARM-кода в arm64 с поддержкой системных вызовов Android. Исходные библиотеки остаются в APK, манифест исправляется под новые версии Android, и пакет подписывается.</p>
+    </details>
+    <details>
+      <summary data-i18n="limitsT">Что важно знать</summary>
+      <p data-i18n="limits">Подходят нативные игры на движках вроде Fusion и Cocos; игры на Unity и сложные движки — экспериментально. Если игра обращается к системной функции, которой нет в прослойке, мы предупредим об этом заранее.</p>
+    </details>
+    <details>
+      <summary data-i18n="keyT">Подпись и обновления</summary>
+      <p data-i18n="key">Ключ подписи создаётся один раз и хранится только в вашем браузере, поэтому повторные патчи ставятся поверх друг друга. Если очистить данные сайта, ключ изменится — тогда прежнюю версию придётся удалить. Сохраните ключ, чтобы не потерять его.</p>
+      <p class="keyrow"><button class="chip" id="keyexp" type="button" data-i18n="keyExp">Сохранить ключ</button>
+        <button class="chip" id="keyimp" type="button" data-i18n="keyImp">Загрузить ключ</button><input id="keyfile" type="file" accept=".json" hidden></p>
+    </details>
+  </section>
+</main>
+
+<footer><span data-i18n="foot">Всё выполняется локально в вашем браузере.</span></footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>

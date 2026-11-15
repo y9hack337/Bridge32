@@ -173,6 +173,31 @@ function makeProxy(template, guestName) {
   return out;
 }
 
+/**
+ * resources.arsc carries the package name too; apps resolve their own resources by name (Resources.getIdentifier(name, type, getPackageName())),
+ * which silently returns 0 for a renamed package. Rewrite the name of the application package chunk (id 0x7f).
+ */
+export function renameArscPackage(arsc, oldName, newName) {
+  if (newName.length > 127) throw new PatchError("package name too long: " + newName);
+  const out = arsc.slice(), dv = new DataView(out.buffer, out.byteOffset, out.byteLength);
+  if (dv.getUint16(0, true) !== 0x0002) return null;                      // not a resource table
+  let pos = dv.getUint16(2, true), changed = 0;
+  while (pos + 8 <= out.length) {
+    const type = dv.getUint16(pos, true), size = dv.getUint32(pos + 4, true);
+    if (size < 8) break;
+    if (type === 0x0200 && dv.getUint32(pos + 8, true) === 0x7f) {         // RES_TABLE_PACKAGE
+      let cur = "";
+      for (let i = 0; i < 128; i++) { const ch = dv.getUint16(pos + 12 + 2 * i, true); if (!ch) break; cur += String.fromCharCode(ch); }
+      if (cur === oldName) {
+        for (let i = 0; i < 128; i++) dv.setUint16(pos + 12 + 2 * i, i < newName.length ? newName.charCodeAt(i) : 0, true);
+        changed++;
+      }
+    }
+    pos += size;
+  }
+  return changed ? out : null;
+}
+
 export function validPackageName(s) { return /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/.test(s); }
 
 /**
@@ -206,6 +231,10 @@ export async function patchApk(a, runtime, identity, opts = {}, log = () => {}, 
   } else if (a.hasArm64) log("arm64-v8a libraries present: no translation needed");
   else log("no native code: pure Java application");
 
+  if (opts.package && opts.package !== pkg && ar.get("resources.arsc")) {
+    const arsc = renameArscPackage(await ar.read("resources.arsc"), pkg, opts.package);
+    if (arsc) { await ar.set("resources.arsc", arsc, false); log("resources.arsc: package name updated"); }     // must stay stored (Android 11+)
+  }
   await ar.set("AndroidManifest.xml", a.manifest.dumps(), true);
   ar.remove((n) => n.startsWith("META-INF/") && (/\.(SF|RSA|DSA|EC)$/.test(n) || n.endsWith("MANIFEST.MF") || n.toUpperCase().startsWith("META-INF/CERT")));
   ar.remove((n) => n === "stamp-cert-sha256");

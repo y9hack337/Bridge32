@@ -11,7 +11,7 @@ const MIN_INSTALLABLE_TARGET = 28;      // Android 15+ refuses to install target
 const COMPONENTS = ["application", "activity", "activity-alias", "service", "receiver", "provider", "instrumentation"];
 // libraries the runtime provides itself (guest imports of these names are bound to host implementations)
 const SYSTEM_LIBS = new Set(["libc.so", "libm.so", "libdl.so", "liblog.so", "libz.so", "libstdc++.so", "libandroid.so", "libEGL.so", "libGLESv1_CM.so",
-  "libGLESv2.so", "libGLESv3.so", "libOpenSLES.so", "libjnigraphics.so"]);
+  "libGLESv2.so", "libGLESv3.so", "libOpenSLES.so", "libjnigraphics.so", "libmediandk.so", "libnativewindow.so", "libvulkan.so", "libcutils.so", "libutils.so", "libbinder.so", "libstagefright.so", "libEGL_adreno.so"]);
 
 export class PatchError extends Error {}
 
@@ -70,7 +70,7 @@ export function describe(a, syms) {
     for (const [lib, [ml, un]] of Object.entries(probs)) {
       missing += un.length;
       for (const m of ml) warnings.push(`${lib} needs ${m}, which is neither in the APK nor provided by the runtime`);
-      if (un.length) warnings.push(`${lib} imports ${un.length} function(s) the runtime does not implement: ${un.slice(0, 8).join(", ")}${un.length > 8 ? " …" : ""}`);
+      if (un.length) warnings.push(`${lib} imports ${un.length} function(s) the runtime does not implement: ${un.slice(0, 40).join(", ")}${un.length > 40 ? " …" : ""}`);
     }
   }
   for (const [n, i] of Object.entries(a.info32)) {
@@ -153,6 +153,7 @@ function patchManifest(doc, opts, log) {
   // Targets from 23 on lose the Apache HTTP classes (org.apache.http.*) that old games link against: ask for the legacy library.
   if (curT < 23 && wantT >= 23 && opts.legacyHttp !== false) addUsesLibrary(doc, "org.apache.http.legacy", log);
   if (opts.minSdk) us.set("minSdkVersion", opts.minSdk);
+  if (opts.debuggable != null && doc.elements("application").length) doc.elements("application")[0].set("debuggable", !!opts.debuggable);
   if (opts.package && opts.package !== pkg) renamePackage(doc, pkg, opts.package, log);
   return pkg;
 }

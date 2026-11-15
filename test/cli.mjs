@@ -23,6 +23,6 @@ let identity;
 if (existsSync(keyFile)) identity = await restoreIdentity(JSON.parse(readFileSync(keyFile, "utf8")));
 else { identity = await createIdentity(); writeFileSync(keyFile, JSON.stringify({ jwk: identity.jwk, certB64: identity.certB64 })); }
 const { parts, report } = await patchApk(a, { lib: data("libapk64.so"), proxy: data("libapk64proxy.so"), symbols: syms }, identity,
-  { package: opt("--package"), targetSdk: opt("--target-sdk") ? +opt("--target-sdk") : undefined }, (m) => console.log("  " + m));
+  { package: opt("--package"), debuggable: args.includes("--debuggable") ? true : undefined, targetSdk: opt("--target-sdk") ? +opt("--target-sdk") : undefined }, (m) => console.log("  " + m));
 writeFileSync(out, Buffer.concat(parts));
 console.log(`wrote ${out} (${(report.size / 1048576).toFixed(1)} MB) in ${Date.now() - t0} ms; warnings: ${report.warnings.length}`);
